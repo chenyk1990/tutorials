@@ -1,0 +1,81 @@
+from rsf.proj import *
+
+def Grey(data,other):
+	Result(data,'byte allpos=y bar=bar.rsf| grey3 flat=n point1=0.8 point2=0.8 color=j frame1=30 frame2=50 frame3=50 screenratio=0.75 scalebar=y bartype=v wherebarlabel=r title= %s'%other)
+
+def Grey2(data,other):
+	Result(data,'byte bar=bar.rsf| grey3 flat=n point1=0.8 point2=0.8 frame1=30 frame2=50 frame3=50 screenratio=0.75 scalebar=y bartype=v wherebarlabel=r title= %s'%other)
+
+def Grey3(data,other):
+	Result(data,' put o4=0 d4=0.2 |window n4=1 f4=4 | scale axis=3|byte bar=bar.rsf clip=0.3 | grey3 flat=y point1=0.5 point2=0.5  frame1=30 frame2=50 frame3=50 screenratio=0.75 scalebar=y bartype=v wherebarlabel=r title= %s'%other)
+
+def Grey33(data,other):
+	Result(data,' put o4=0 d4=0.2 |window n4=1 f4=4 | scale axis=3|byte bar=bar.rsf clip=0.01 | grey3 flat=y point1=0.5 point2=0.5  frame1=30 frame2=50 frame3=50 screenratio=0.75 scalebar=y bartype=v wherebarlabel=r title= %s'%other)
+
+
+def Grey32(data,data1,other):
+	Result(data,data1,'scale axis=4| put o4=0 d4=0.2 |window n4=1 f4=4 | byte bar=bar.rsf clip=0.005 | grey3 flat=y point1=0.5 point2=0.5  frame1=30 frame2=50 frame3=50 screenratio=0.75 scalebar=y bartype=v wherebarlabel=r title= %s'%other)
+
+Flow('vp01',None,
+     	'''
+     	math output=1500 n1=50 n2=100 n3=100 d1=10 d2=10 d3=10
+     	label1=Z unit1=m label2=X unit2=m label3=Y unit3=m
+     	''')
+Flow('vp02',None,
+     	'''
+     	math output=2000 n1=50 n2=100 n3=100 d1=10 d2=10 d3=10
+     	label1=Z unit1=m label2=X unit2=m label3=Y unit3=m
+     	''')
+Flow('vp','vp01 vp02','cat axis=1 ${SOURCES[1]}|math output=3500')
+Flow('vs','vp', 
+	'''
+	math output="2000" n1=50 n2=100 n3=100 d1=10 d2=10 d3=10
+     	label1=Z unit1=m label2=X unit2=m label3=Y unit3=m
+	''')
+Flow('rho',None, 
+	'''
+	math output=2000 n1=100 n2=100 n3=100 d1=10 d2=10 d3=10
+     	label1=Z unit1=m label2=X unit2=m label3=Y unit3=m 
+	''')
+
+# Flow('vp2','vp','window n1=50 n2=50 n3=50')
+# Flow('vs2','vs','window n1=50 n2=50 n3=50')
+# Flow('rho2','rho','window n1=50 n2=50 n3=50')
+
+Grey('vp','')
+Grey('vs','')
+Grey('rho','')
+
+#strike=45, dip=90, rake=45
+M=-0.7071,0,0.5,0,0.7071,-0.5,0.5,-0.5,0
+#ISO (explosive source)
+Flow('rvz rvx rvy wavz wavx wavy','vp vs rho',
+	'''
+	efd3dmt sx=50 sy=50 sz=50 ifwfd=y verb=y free=n vs=${SOURCES[1]} rho=${SOURCES[2]} wavx=${TARGETS[1]} wavy=${TARGETS[2]} nb=50 fm=20 nt=1001 ct=0.01 jsnap=50 dt=0.001  M=-0.7071,0,0.5,0,0.7071,-0.5,0.5,-0.5,0
+	rvx=${TARGETS[1]} rvy=${TARGETS[2]} wavz=${TARGETS[3]} wavx=${TARGETS[4]} wavy=${TARGETS[5]} 
+	''') 
+
+Grey3('wavz','scalebar=n ')
+Grey3('wavx','scalebar=n ')
+Grey3('wavy','scalebar=n ')
+
+Grey32('wavz2','wavz','scalebar=n ')
+Grey32('wavx2','wavx','scalebar=n ')
+Grey32('wavy2','wavy','scalebar=n ')
+
+Grey2('rvz','scalebar=n ')
+Grey2('rvx','scalebar=n ')
+Grey2('rvy','scalebar=n ')
+
+Flow('uz','rvz','window n2=1 f2=50 n3=1 f3=50')
+Flow('ux','rvx','window n2=1 f2=50 n3=1 f3=50')
+Flow('uy','rvy','window n2=1 f2=50 n3=1 f3=50')
+
+Result('uz','rvz','window n2=1 f2=50 n3=1 f3=50|graph title="Uz" min2=-10e-14 max2=10e-14')
+Result('ux','rvx','window n2=1 f2=50 n3=1 f3=50|graph title="Ux" min2=-10e-14 max2=10e-14')
+Result('uy','rvy','window n2=1 f2=50 n3=1 f3=50|graph title="Uy" min2=-10e-14 max2=10e-14')
+Result('comp','Fig/uz.vpl Fig/ux.vpl Fig/uy.vpl','OverUnderAniso')
+
+
+
+End()
